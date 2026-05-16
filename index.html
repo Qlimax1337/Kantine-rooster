@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kantine Rooster</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; color: #1a1a18; min-height: 100vh; }
+  .header { background: #1a1a1a; color: white; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 12px; border-bottom: 3px solid #cc1111; }
+  .header h1 { font-size: 18px; font-weight: 500; }
+  .header .club { font-size: 13px; opacity: 0.7; }
+  .container { max-width: 640px; margin: 0 auto; padding: 1.25rem 1rem; }
+  .tab-bar { display: flex; gap: 4px; margin-bottom: 1.25rem; background: white; border-radius: 10px; padding: 4px; border: 0.5px solid #e0dfd8; }
+  .tab { flex: 1; padding: 8px; font-size: 13px; cursor: pointer; border: none; background: none; color: #888; border-radius: 7px; font-family: inherit; }
+  .tab.active { background: #1a1a1a; color: white; font-weight: 500; }
+  .card { background: white; border: 0.5px solid #e0dfd8; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 10px; }
+  .dienst-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .dienst-title { font-size: 15px; font-weight: 500; }
+  .dienst-meta { font-size: 13px; color: #888; margin-top: 2px; }
+  .badge { font-size: 12px; padding: 3px 10px; border-radius: 6px; font-weight: 500; }
+  .badge-open { background: #fde8e8; color: #991111; }
+  .badge-vol { background: #faeeda; color: #854f0b; }
+  .badge-past { background: #f1efe8; color: #888; }
+  .spots { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .spot { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; border: 0.5px solid #e0dfd8; background: #f5f4f0; color: #888; }
+  .spot.filled { background: #fde8e8; color: #991111; border-color: #f7c1c1; font-size: 10px; }
+  .spot.leeg { border: 1.5px dashed #ccc; cursor: pointer; }
+  .spot.leeg:hover { background: #fde8e8; border-color: #f7c1c1; color: #991111; }
+  .inschrijf-form { display: flex; gap: 8px; margin-top: 8px; }
+  .inschrijf-form input { flex: 1; padding: 7px 10px; font-size: 13px; border-radius: 8px; border: 0.5px solid #ccc; font-family: inherit; }
+  .btn { padding: 7px 14px; font-size: 13px; border-radius: 8px; border: 0.5px solid #ccc; background: white; color: #1a1a18; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .btn:hover { background: #f5f4f0; }
+  .btn.primary { background: #cc1111; color: white; border-color: #cc1111; }
+  .btn.primary:hover { background: #aa0e0e; }
+  .btn.danger { color: #a32d2d; border-color: #f7c1c1; }
+  .btn.danger:hover { background: #fcebeb; }
+  .btn.small { padding: 5px 12px; font-size: 12px; }
+  .leeg-state { text-align: center; padding: 2rem 0; color: #888; font-size: 14px; }
+  .leeg-state .icon { font-size: 32px; margin-bottom: 8px; }
+  .admin-form { background: #f5f4f0; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .form-row label { font-size: 12px; color: #888; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .form-row input { width: 100%; padding: 7px 10px; font-size: 14px; border-radius: 8px; border: 0.5px solid #ccc; font-family: inherit; background: white; }
+  .section-label { font-size: 11px; font-weight: 500; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .naam-bar { background: white; border: 0.5px solid #e0dfd8; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-size: 13px; color: #888; }
+  .naam-bar input { flex: 1; padding: 5px 8px; font-size: 13px; border-radius: 7px; border: 0.5px solid #ccc; font-family: inherit; }
+  .mijn-tag { display: inline-block; font-size: 10px; background: #fde8e8; color: #991111; border-radius: 4px; padding: 1px 6px; margin-left: 6px; font-weight: 500; }
+  .uitschrijf-btn { font-size: 11px; color: #aaa; cursor: pointer; border: none; background: none; padding: 0; margin-left: 4px; font-family: inherit; }
+  .uitschrijf-btn:hover { color: #a32d2d; }
+  .namen-lijst { font-size: 12px; color: #888; margin-bottom: 6px; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1a1a18; color: white; padding: 10px 20px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; z-index: 99; }
+  .toast.show { opacity: 1; }
+  .divider { border: none; border-top: 0.5px solid #e0dfd8; margin: 1rem 0; }
+  @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header h1" style="font-size:18px;font-weight:500">⚽ Kantine Rooster</div>
+    <div class="club">Inschrijven voor kantinediensten</div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="tab-bar">
+    <button class="tab active" onclick="toon('rooster')">📅 Rooster</button>
+    <button class="tab" onclick="toon('mijn')">👤 Mijn diensten</button>
+    <button class="tab" onclick="toon('admin')">⚙️ Beheer</button>
+  </div>
+  <div id="tab-rooster"></div>
+  <div id="tab-mijn" style="display:none"></div>
+  <div id="tab-admin" style="display:none"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'kantine_v1';
+
+function laadData() {
+  try { const d = localStorage.getItem(STORAGE_KEY); return d ? JSON.parse(d) : null; } catch(e) { return null; }
+}
+function slaOp(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function vandaag() { return new Date().toISOString().split('T')[0]; }
+
+function formatDatum(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+function volgendeZaterdag(offsetWeken) {
+  const d = new Date();
+  const dag = d.getDay();
+  const diff = (6 - dag + 7) % 7 || 7;
+  d.setDate(d.getDate() + diff + offsetWeken * 7);
+  return d.toISOString().split('T')[0];
+}
+
+function initData() {
+  const bestaand = laadData();
+  if (bestaand) return bestaand;
+  const data = {
+    naam: '',
+    diensten: [
+      { id: 1, datum: volgendeZaterdag(0), tijd: '09:00 – 13:00', naam: 'Ochtend kantine', plekken: 3, ingeschreven: [] },
+      { id: 2, datum: volgendeZaterdag(0), tijd: '13:00 – 17:00', naam: 'Middag kantine', plekken: 3, ingeschreven: [] },
+      { id: 3, datum: volgendeZaterdag(1), tijd: '09:00 – 13:00', naam: 'Ochtend kantine', plekken: 3, ingeschreven: [] },
+      { id: 4, datum: volgendeZaterdag(1), tijd: '13:00 – 17:00', naam: 'Middag kantine', plekken: 3, ingeschreven: [] },
+    ],
+    nextId: 5
+  };
+  slaOp(data);
+  return data;
+}
+
+let data = initData();
+let activeTab = 'rooster';
+let inschrijfOpen = {};
+
+function toon(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['rooster','mijn','admin'][i] === tab);
+  });
+  ['rooster','mijn','admin'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none';
+  });
+  render();
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function render() {
+  if (activeTab === 'rooster') renderRooster();
+  if (activeTab === 'mijn') renderMijn();
+  if (activeTab === 'admin') renderAdmin();
+}
+
+function renderRooster() {
+  const el = document.getElementById('tab-rooster');
+  const nu = vandaag();
+  const komend = data.diensten.filter(d => d.datum >= nu).sort((a,b) => (a.datum+a.tijd).localeCompare(b.datum+b.tijd));
+  const gedaan = data.diensten.filter(d => d.datum < nu).sort((a,b) => b.datum.localeCompare(a.datum));
+
+  let html = `<div class="naam-bar">👤 Jouw naam: <input type="text" placeholder="Vul je naam in…" value="${esc(data.naam)}" oninput="stelNaamIn(this.value)"></div>`;
+
+  if (komend.length === 0) {
+    html += `<div class="leeg-state"><div class="icon">📭</div>Geen komende diensten.<br>Voeg ze toe via Beheer.</div>`;
+  }
+
+  let huidigDatum = '';
+  for (const d of komend) {
+    if (d.datum !== huidigDatum) {
+      html += `<div class="section-label" style="margin-top:${huidigDatum ? '1.25rem' : '0'}">${formatDatum(d.datum)}</div>`;
+      huidigDatum = d.datum;
+    }
+    const vol = d.ingeschreven.length >= d.plekken;
+    const zitIkErin = data.naam && d.ingeschreven.includes(data.naam);
+    const vrij = d.plekken - d.ingeschreven.length;
+    const badgeClass = vol ? 'badge-vol' : 'badge-open';
+    const badgeText = vol ? 'Vol' : `${vrij} plek${vrij !== 1 ? 'ken' : ''} vrij`;
+
+    html += `<div class="card">
+      <div class="dienst-header">
+        <div>
+          <div class="dienst-title">${esc(d.naam)}${zitIkErin ? '<span class="mijn-tag">jij!</span>' : ''}</div>
+          <div class="dienst-meta">🕐 ${esc(d.tijd)}</div>
+        </div>
+        <span class="badge ${badgeClass}">${badgeText}</span>
+      </div>
+      <div class="spots">`;
+
+    for (let i = 0; i < d.plekken; i++) {
+      if (i < d.ingeschreven.length) {
+        const naam = d.ingeschreven[i];
+        const initialen = naam.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
+        html += `<div class="spot filled" title="${esc(naam)}">${initialen}</div>`;
+      } else {
+        html += `<div class="spot leeg" onclick="openInschrijf(${d.id})" title="Klik om in te schrijven">+</div>`;
+      }
+    }
+
+    html += `</div>`;
+
+    if (d.ingeschreven.length > 0) {
+      html += `<div class="namen-lijst">`;
+      d.ingeschreven.forEach((naam, i) => {
+        const isIk = data.naam && naam === data.naam;
+        html += esc(naam);
+        if (isIk) html += ` <button class="uitschrijf-btn" onclick="uitschrijven(${d.id},'${esc(naam)}')">× uitschrijven</button>`;
+        if (i < d.ingeschreven.length - 1) html += ', ';
+      });
+      html += `</div>`;
+    }
+
+    if (inschrijfOpen[d.id] && !vol) {
+      html += `<div class="inschrijf-form"><input type="text" id="naam-${d.id}" placeholder="Jouw naam" value="${esc(data.naam)}" onkeydown="if(event.key==='Enter')schrijfIn(${d.id})"><button class="btn primary small" onclick="schrijfIn(${d.id})">Inschrijven</button><button class="btn small" onclick="sluitForm(${d.id})">Annuleer</button></div>`;
+    } else if (!vol && !zitIkErin) {
+      html += `<button class="btn small" style="margin-top:6px" onclick="openInschrijf(${d.id})">+ Inschrijven</button>`;
+    }
+
+    html += `</div>`;
+  }
+
+  if (gedaan.length > 0) {
+    html += `<div class="section-label" style="margin-top:1.25rem">Afgelopen diensten</div>`;
+    for (const d of gedaan.slice(0,3)) {
+      html += `<div class="card" style="opacity:0.5">
+        <div class="dienst-header">
+          <div><div class="dienst-title">${esc(d.naam)}</div><div class="dienst-meta">${formatDatum(d.datum)} · ${esc(d.tijd)}</div></div>
+          <span class="badge badge-past">${d.ingeschreven.length}/${d.plekken}</span>
+        </div>
+        <div style="font-size:13px;color:#888">${d.ingeschreven.length > 0 ? d.ingeschreven.map(esc).join(', ') : 'Niemand ingeschreven'}</div>
+      </div>`;
+    }
+  }
+
+  el.innerHTML = html;
+}
+
+function renderMijn() {
+  const el = document.getElementById('tab-mijn');
+  const nu = vandaag();
+  if (!data.naam) {
+    el.innerHTML = `<div class="leeg-state"><div class="icon">👤</div>Vul eerst je naam in bij het rooster.</div>`;
+    return;
+  }
+  const mijn = data.diensten.filter(d => d.ingeschreven.includes(data.naam)).sort((a,b) => a.datum.localeCompare(b.datum));
+  if (mijn.length === 0) {
+    el.innerHTML = `<div class="leeg-state"><div class="icon">📭</div>Je bent nog nergens ingeschreven.</div>`;
+    return;
+  }
+  let html = `<div class="section-label">Diensten van ${esc(data.naam)}</div>`;
+  for (const d of mijn) {
+    const verleden = d.datum < nu;
+    const rest = d.ingeschreven.filter(n => n !== data.naam);
+    html += `<div class="card" style="${verleden ? 'opacity:0.55' : ''}">
+      <div class="dienst-header">
+        <div><div class="dienst-title">${esc(d.naam)}</div><div class="dienst-meta">${formatDatum(d.datum)} · ${esc(d.tijd)}</div></div>
+        ${verleden ? '<span class="badge badge-past">Gedaan ✓</span>' : '<span class="badge badge-open">Aankomend</span>'}
+      </div>
+      <div style="font-size:13px;color:#888;margin-bottom:${!verleden ? '8px' : '0'}">Met: ${rest.length > 0 ? rest.map(esc).join(', ') : 'alleen jij'}</div>
+      ${!verleden ? `<button class="btn danger small" onclick="uitschrijven(${d.id},'${esc(data.naam)}')">× Uitschrijven</button>` : ''}
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderAdmin() {
+  const el = document.getElementById('tab-admin');
+  let html = `
+  <div class="admin-form">
+    <div style="font-size:14px;font-weight:500;margin-bottom:12px">Nieuwe dienst aanmaken</div>
+    <div class="form-row">
+      <div><label>Datum</label><input type="date" id="nieuw-datum" value="${volgendeZaterdag(0)}"></div>
+      <div><label>Naam dienst</label><input type="text" id="nieuw-naam" value="Ochtend kantine"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Tijdstip</label><input type="text" id="nieuw-tijd" value="09:00 – 13:00"></div>
+      <div><label>Aantal plekken</label><input type="number" id="nieuw-plekken" value="3" min="1" max="20"></div>
+    </div>
+    <button class="btn primary" onclick="voegDienstToe()">+ Dienst toevoegen</button>
+  </div>
+  <div class="section-label">Alle diensten beheren</div>`;
+
+  const gesorteerd = [...data.diensten].sort((a,b) => (a.datum+a.tijd).localeCompare(b.datum+b.tijd));
+  if (gesorteerd.length === 0) {
+    html += `<div class="leeg-state"><div class="icon">📭</div>Nog geen diensten aangemaakt.</div>`;
+  }
+  for (const d of gesorteerd) {
+    html += `<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div>
+        <div class="dienst-title">${esc(d.naam)}</div>
+        <div class="dienst-meta">${formatDatum(d.datum)} · ${esc(d.tijd)} · ${d.ingeschreven.length}/${d.plekken} ingeschreven</div>
+        ${d.ingeschreven.length > 0 ? `<div style="font-size:12px;color:#888;margin-top:3px">${d.ingeschreven.map(esc).join(', ')}</div>` : ''}
+      </div>
+      <button class="btn danger small" onclick="verwijderDienst(${d.id})">🗑</button>
+    </div>`;
+  }
+
+  html += `<hr class="divider"><button class="btn danger small" onclick="resetAlles()">⚠️ Alles wissen</button>`;
+  el.innerHTML = html;
+}
+
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function stelNaamIn(naam) { data.naam = naam; slaOp(data); }
+function openInschrijf(id) { inschrijfOpen[id] = true; render(); setTimeout(() => { const el = document.getElementById('naam-'+id); if(el) el.focus(); }, 50); }
+function sluitForm(id) { inschrijfOpen[id] = false; render(); }
+
+function schrijfIn(id) {
+  const input = document.getElementById('naam-'+id);
+  const naam = input ? input.value.trim() : '';
+  if (!naam) { toast('Vul je naam in!'); return; }
+  const dienst = data.diensten.find(d => d.id === id);
+  if (!dienst) return;
+  if (dienst.ingeschreven.includes(naam)) { toast('Je staat al ingeschreven!'); return; }
+  if (dienst.ingeschreven.length >= dienst.plekken) { toast('Dienst is al vol!'); return; }
+  dienst.ingeschreven.push(naam);
+  data.naam = naam;
+  inschrijfOpen[id] = false;
+  slaOp(data);
+  toast('✓ Ingeschreven als ' + naam);
+  render();
+}
+
+function uitschrijven(id, naam) {
+  const dienst = data.diensten.find(d => d.id === id);
+  if (!dienst) return;
+  dienst.ingeschreven = dienst.ingeschreven.filter(n => n !== naam);
+  slaOp(data);
+  toast(naam + ' uitgeschreven.');
+  render();
+}
+
+function voegDienstToe() {
+  const datum = document.getElementById('nieuw-datum').value;
+  const naam = document.getElementById('nieuw-naam').value.trim();
+  const tijd = document.getElementById('nieuw-tijd').value.trim();
+  const plekken = parseInt(document.getElementById('nieuw-plekken').value);
+  if (!datum || !naam || !tijd || isNaN(plekken)) { toast('Vul alle velden in!'); return; }
+  data.diensten.push({ id: data.nextId++, datum, tijd, naam, plekken, ingeschreven: [] });
+  slaOp(data);
+  toast('Dienst toegevoegd!');
+  render();
+}
+
+function verwijderDienst(id) {
+  if (!confirm('Dienst verwijderen?')) return;
+  data.diensten = data.diensten.filter(d => d.id !== id);
+  slaOp(data);
+  toast('Dienst verwijderd.');
+  render();
+}
+
+function resetAlles() {
+  if (!confirm('Weet je het zeker? Dit verwijdert ALLES.')) return;
+  data.diensten = [];
+  slaOp(data);
+  toast('Alles gewist.');
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
